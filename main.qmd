@@ -3,7 +3,7 @@ title: "Entrega 5"
 format: html
 editor: visual
 ---
-```{r,echo=FALSE}
+```{r,echo=FALSE,warning=FALSE,message=FALSE}
 library(tidyverse)
 library(factoextra)
 library(ggfortify)
@@ -49,7 +49,7 @@ cov(df_num) %>% diag
 ```
 Si vemos las varianzas de cada variable, observamos que la de la agricultura es mucho mayor a las demás, y que las de transporte y comunicaciones, construcción, energía y minería son muy pequeñas. Esto explica por qué la agricultura está tan representada y las otras cuatro lo están tan poco. Aún así, las finanzas deberían salir más representadas. Veamos qué está pasando con la agricultura:
 
-```{r}
+```{r,warning=FALSE}
 ggplot(data=df, aes(x=Country,y=Agriculture,fill=Country))+
   geom_histogram(stat="identity")+
   coord_flip()+
@@ -76,8 +76,7 @@ plot2<-fviz_cos2(acp, choice = "var", axes = 1:2)
 
 grid.arrange(plot1,plot2,ncol=2)
 ```
-
-Las representaciones han mejorado ligeramente.
+Las representaciones han mejorado ligeramente. Vemos que Agricultura está muy bien representada por la CP1. Por otra parte, Servicios Sociales, Indústrias y Fábricas están bien representadas por las componentes principales 1 y 2. En cambio, las otras ocupaciones restantes no están demasiado representadas por ninguna de las dos CP.
 
 
 ```{r}
@@ -88,6 +87,16 @@ ggscatter(acp_df,x="PC1",y="PC2",label=Country,size=1,repel=TRUE)
 #autoplot(acp, data = df, colour = 'Country', labels=Country)
 ```
 
-Vamos agrupar
+Vamos a agrupar los países según la semejanza en la distribución de su fuerza de trabajo. Dividiremos los países en un total de tres grupos. El primer grupo estará formado por los países que tienen su coeficiente positivo en la CP1. En estos países predomina la agricultura. El segundo grupo estará formado por los países que tienen coeficiente negativo en la CP1 y positivo en la CP2. Aquí estarán los países donde los servicios sociales y las industrias de servicio son ocupaciones frecuentes. Finalmente, el tercer grupo estará formado por los países que tienen coeficiente negativo en la CP1 y en la CP2. En dichos países, las fábricas captan gran parte de la fuerza de trabajo.
+
+Con esta agrupación, la representación es la siguiente:
+```{r}
+acp_df <- acp_df %>% mutate(Grupo = if_else(PC1 >= 0,
+                                1,
+                                if_else(PC2 >= 0, 2, 3)) %>% as.factor)
+ggscatter(acp_df,x="PC1",y="PC2",label=Country,color="Grupo",size=1,repel=TRUE)+
+  theme(legend.position="none")
+```
+
 
 
