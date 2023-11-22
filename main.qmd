@@ -1,0 +1,93 @@
+---
+title: "Entrega 5"
+format: html
+editor: visual
+---
+```{r,echo=FALSE}
+library(tidyverse)
+library(factoextra)
+library(ggfortify)
+library(ggpubr)
+library(gridExtra)
+```
+
+Primero cargamos y limpiamos los datos:
+
+```{r}
+df=read.table("europa.dat")
+Country=rownames(df)
+rownames(df)=NULL
+df<-df %>% mutate(Country) 
+colnames(df)=c("Agriculture", "Mines", "Factories","Energy","Construction","Service_industries","Finance","Social_services","Trans_comm","Country")
+```
+
+Creamos un dataframe solo con las numéricas y realizamos el ACP. Dibujamos también el gráfico de codo:
+
+```{r}
+df_num <- df %>% select(-Country)
+
+acp=prcomp(df_num, center=TRUE, scale = FALSE)
+fviz_eig(acp, addlabels = TRUE, ylim=c(0,100))
+```
+
+Observamos que con dos componentes principales calculamos la gran mayoría de la varianza. Veamos qué tan representada queda cada variable:
+
+```{r}
+
+plot1<-fviz_pca_var(acp, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE) 
+plot2<-fviz_cos2(acp, choice = "var", axes = 1:2)
+
+grid.arrange(plot1,plot2,ncol=2)
+```
+
+Vemos que la variable de agricultura queda sobrerrepresentada, mientras que la mayoría de las variables prácticamente son ignoradas.
+
+```{r}
+cov(df_num) %>% diag
+```
+Si vemos las varianzas de cada variable, observamos que la de la agricultura es mucho mayor a las demás, y que las de transporte y comunicaciones, construcción, energía y minería son muy pequeñas. Esto explica por qué la agricultura está tan representada y las otras cuatro lo están tan poco. Aún así, las finanzas deberían salir más representadas. Veamos qué está pasando con la agricultura:
+
+```{r}
+ggplot(data=df, aes(x=Country,y=Agriculture,fill=Country))+
+  geom_histogram(stat="identity")+
+  coord_flip()+
+  theme(legend.position="none")
+```
+Resulta que tenemos un outlier: Turquía. Intentemos hacer de nuevo el ACP eliminando esta observación.
+
+```{r}
+df <- df %>% filter(!(Country=="Turquia"))
+df_num <- df %>% select(-Country)
+
+acp=prcomp(df_num, center=TRUE, scale = FALSE)
+fviz_eig(acp, addlabels = TRUE, ylim=c(0,100))
+```
+
+Al igual que antes, con dos componentes capturamos la mayoría de la varianza. Veamos qué tan representada queda cada variable:
+
+```{r}
+
+plot1<-fviz_pca_var(acp, col.var = "contrib",
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE) 
+plot2<-fviz_cos2(acp, choice = "var", axes = 1:2)
+
+grid.arrange(plot1,plot2,ncol=2)
+```
+
+Las representaciones han mejorado ligeramente.
+
+
+```{r}
+acp_df=acp$x
+acp_df<- acp_df %>% as.data.frame(.)
+Country <- Country[Country!="Turquia"]
+ggscatter(acp_df,x="PC1",y="PC2",label=Country,size=1,repel=TRUE)
+#autoplot(acp, data = df, colour = 'Country', labels=Country)
+```
+
+Vamos agrupar
+
+
